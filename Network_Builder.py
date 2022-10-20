@@ -156,10 +156,11 @@ class Network_Builder:
             end_time = time.time()
             print("Time for epoch {0} is {1:4f}s || Discriminator loss = {2} || Generator loss = {3}".format(epoch, (end_time-start_time), tf.reduce_sum(total_discriminator_loss), tf.reduce_sum(generator_loss)))
             self.save_the_model_checkpoint(epoch_number=epoch)
+            test_image_noise = tf.random.normal(shape=(1, codings_size))
+            test_image = self.generator_model(test_image_noise)[0]
+            Visualize_data.display_single_image(test_image)
             pass
-        test_image_noise = tf.random.normal(shape=(1, codings_size))
-        test_image = self.generator_model(test_image_noise)[0]
-        Visualize_data.display_single_image(test_image)
+
         pass
 
     def save_the_model_checkpoint(self, epoch_number):

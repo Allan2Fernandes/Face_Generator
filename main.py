@@ -13,15 +13,15 @@ EPOCHS = 10
 folder_path = "C:\\Users\\allan\\Downloads\\GANFacesDateset"
 
 # Get all image paths from that folder
-image_paths = FileIO.get_list_image_paths(folder_path=folder_path, limit=10000)  # Limit has to be below or equal to 10k
+#image_paths = FileIO.get_list_image_paths(folder_path=folder_path, limit=10000)  # Limit has to be below or equal to 10k
 
 # Convert every single image into an array and return the whole tensor. (Using the image path)
-image_tensors = DatasetBuilder.get_image_tensors(image_paths=image_paths, image_size=image_size)
+#image_tensors = DatasetBuilder.get_image_tensors(image_paths=image_paths, image_size=image_size)
 
 #Visualize_data.display_single_image(image_tensors[10])
 #Create a dataset
-dataset = DatasetBuilder.build_label_dataset(image_tensors=image_tensors, batch_size=BATCH_SIZE)
-
+#dataset = DatasetBuilder.build_label_dataset(image_tensors=image_tensors, batch_size=BATCH_SIZE)
+dataset = DatasetBuilder.build_label_dataset_v2(directory_path=folder_path, target_size=image_size, batch_size=BATCH_SIZE)
 
 network_builder = Network_Builder.Network_Builder(image_size=image_size, codings_size=codings_size)
 network_builder.build_generator()

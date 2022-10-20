@@ -20,3 +20,29 @@ def build_label_dataset(image_tensors, batch_size):
     #dataset = dataset.shuffle(1000)
     dataset = dataset.batch(batch_size=batch_size, drop_remainder=True)
     return dataset
+
+def build_label_dataset_v2(directory_path, target_size, batch_size):
+    dimension = target_size[0]
+    target_dimension = (dimension, dimension)
+    dataset = tf.keras.utils.image_dataset_from_directory(
+        directory=directory_path,
+        labels=None,
+        label_mode=None,
+        class_names=None,
+        color_mode='rgb',
+        batch_size=batch_size,
+        image_size=target_dimension,
+        shuffle=False,
+        seed=None,
+        validation_split=None,
+        subset=None,
+        interpolation='bilinear',
+        follow_links=False,
+        crop_to_aspect_ratio=False)
+    dataset = dataset.map(map_dataset)
+    return dataset
+
+def map_dataset(datapoint):
+    datapoint = tf.cast(datapoint, dtype=tf.float32)
+    datapoint = (datapoint-127.5)/127.5
+    return datapoint
