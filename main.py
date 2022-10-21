@@ -7,7 +7,7 @@ import Visualize_data
 BATCH_SIZE = 32
 image_size = (128, 128, 3)
 codings_size = 128
-EPOCHS = 10
+EPOCHS = 20
 
 # Folder location
 folder_path = "C:\\Users\\allan\\Downloads\\GANFacesDateset"
@@ -24,7 +24,7 @@ folder_path = "C:\\Users\\allan\\Downloads\\GANFacesDateset"
 dataset = DatasetBuilder.build_label_dataset_v2(directory_path=folder_path, target_size=image_size, batch_size=BATCH_SIZE)
 
 network_builder = Network_Builder.Network_Builder(image_size=image_size, codings_size=codings_size)
-network_builder.build_generator()
+network_builder.build_autoencoder_generator()
 network_builder.build_discriminator()
 network_builder.build_GAN()
 network_builder.compile_models()

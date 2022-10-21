@@ -20,6 +20,42 @@ class Network_Builder:
         self.codings_size = codings_size
         pass
 
+
+    def build_autoencoder_generator(self):
+        kernel_size = 4
+        filters = 64
+        output_channels = 3
+
+
+        self.generator_model = Sequential([
+            Dense(units=(self.dim1*self.dim2*output_channels), input_shape=[self.codings_size]),
+            Reshape(target_shape=(self.dim1, self.dim2, output_channels)),
+            #Downsample it to the bottleneck
+            Conv2D(filters = filters, kernel_size=kernel_size, strides = 2,  padding = 'same', use_bias=False, kernel_initializer='he_normal'),
+            BatchNormalization(),
+            LeakyReLU(),
+            Conv2D(filters=filters*2, kernel_size=kernel_size, strides=2, padding='same', use_bias=False, kernel_initializer='he_normal'),
+            BatchNormalization(),
+            LeakyReLU(),
+            Conv2D(filters=filters*4, kernel_size=kernel_size, strides=2, padding='same', use_bias=False, kernel_initializer='he_normal'),
+            BatchNormalization(),
+            LeakyReLU(),
+
+            #Bottleneck layer
+            Conv2D(filters=filters*8, kernel_size=kernel_size, strides=2, padding='same', kernel_initializer='he_normal'),
+            BatchNormalization(),
+            LeakyReLU(),
+
+            #Upsample it to the input shape
+            Conv2DTranspose(filters=filters*4, activation='selu', strides=2, kernel_size=kernel_size, padding='same', use_bias=False),
+            BatchNormalization(),
+            Conv2DTranspose(filters=filters*2, activation='selu', strides=2, kernel_size=kernel_size, padding='same', use_bias=False),
+            BatchNormalization(),
+            Conv2DTranspose(filters=filters, activation='selu', strides=2, kernel_size=kernel_size, padding='same', use_bias=False),
+            BatchNormalization(),
+            Conv2DTranspose(filters=output_channels, activation='tanh', strides=2, kernel_size=kernel_size, padding='same', use_bias=False)
+        ])
+
     def build_generator(self):
         # It has to start with
         dimension = int(self.dim1 / math.pow(2, 5))
@@ -48,14 +84,6 @@ class Network_Builder:
         self.discriminator_model = Sequential([
             Input(shape=self.discriminator_input_shape),
 
-            Conv2D(filters=64, strides=(2, 2), kernel_size=(4, 4), padding='same', kernel_initializer='he_normal', use_bias=False),
-            BatchNormalization(),
-            LeakyReLU(),
-
-            Conv2D(filters=64, strides=(2, 2), kernel_size=(4, 4), padding='same', kernel_initializer='he_normal', use_bias=False),
-            BatchNormalization(),
-            LeakyReLU(),
-
             Conv2D(filters=128, strides=(2, 2), kernel_size=(4, 4), padding='same', kernel_initializer='he_normal', use_bias=False),
             BatchNormalization(),
             LeakyReLU(),
@@ -65,6 +93,14 @@ class Network_Builder:
             LeakyReLU(),
 
             Conv2D(filters=256, strides=(2, 2), kernel_size=(4, 4), padding='same', kernel_initializer='he_normal', use_bias=False),
+            BatchNormalization(),
+            LeakyReLU(),
+
+            Conv2D(filters=256, strides=(2, 2), kernel_size=(4, 4), padding='same', kernel_initializer='he_normal', use_bias=False),
+            BatchNormalization(),
+            LeakyReLU(),
+
+            Conv2D(filters=512, strides=(2, 2), kernel_size=(4, 4), padding='same', kernel_initializer='he_normal', use_bias=False),
             LeakyReLU(),
 
             Flatten(),
@@ -97,7 +133,7 @@ class Network_Builder:
     def summarize_all_models(self):
         self.generator_model.summary()
         self.discriminator_model.summary()
-        self.GAN.summary()
+        #self.GAN.summary()
         pass
 
 
@@ -127,7 +163,7 @@ class Network_Builder:
                     real_output_discriminator_labels = tf.reshape(real_output_discriminator_labels, shape=(batch_size, 1))
                     real_loss = self.loss_function(real_output_discriminator_labels, real_output)
                     #Add up the 2 losses to calculate total loss
-                    total_discriminator_loss = fake_loss + real_loss
+                    total_discriminator_loss = tf.concat([fake_loss, real_loss], axis = 0)
                     #total_discriminator_loss = tf.reduce_sum(total_discriminator_loss)/ (batch_size*2) DO NOT REDUCE SUM. IT TAKES AN AVERAGE OF ALL THE REAL AND FAKE LOSSES
                     pass
                 #Calculate the gradients between the loss and trainable weights of the discriminator
@@ -155,11 +191,15 @@ class Network_Builder:
             pass
             end_time = time.time()
             print("Time for epoch {0} is {1:4f}s || Discriminator loss = {2} || Generator loss = {3}".format(epoch, (end_time-start_time), tf.reduce_sum(total_discriminator_loss), tf.reduce_sum(generator_loss)))
-            self.save_the_model_checkpoint(epoch_number=epoch)
-            test_image_noise = tf.random.normal(shape=(1, codings_size))
-            test_image = self.generator_model(test_image_noise)[0]
-            Visualize_data.display_single_image(test_image)
+            if (epoch+1) % 5 == 0:
+                self.save_the_model_checkpoint(epoch_number=epoch+1)
+                pass
+
             pass
+        test_image_noise = tf.random.normal(shape=(1, codings_size))
+        test_image = self.generator_model(test_image_noise)[0]
+        Visualize_data.display_single_image(test_image)
+
 
         pass
 
