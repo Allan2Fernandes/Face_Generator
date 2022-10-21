@@ -85,6 +85,14 @@ class Network_Builder:
         self.discriminator_model = Sequential([
             Input(shape=self.discriminator_input_shape),
 
+            Conv2D(filters=64, strides=(2, 2), kernel_size=(4, 4), padding='same', kernel_initializer='he_normal', use_bias=False),
+            BatchNormalization(),
+            LeakyReLU(),
+
+            Conv2D(filters=64, strides=(2, 2), kernel_size=(4, 4), padding='same', kernel_initializer='he_normal', use_bias=False),
+            BatchNormalization(),
+            LeakyReLU(),
+
             Conv2D(filters=128, strides=(2, 2), kernel_size=(4, 4), padding='same', kernel_initializer='he_normal', use_bias=False),
             BatchNormalization(),
             LeakyReLU(),
@@ -98,14 +106,6 @@ class Network_Builder:
             LeakyReLU(),
 
             Conv2D(filters=256, strides=(2, 2), kernel_size=(4, 4), padding='same', kernel_initializer='he_normal', use_bias=False),
-            BatchNormalization(),
-            LeakyReLU(),
-
-            Conv2D(filters=512, strides=(2, 2), kernel_size=(4, 4), padding='same', kernel_initializer='he_normal', use_bias=False),
-            BatchNormalization(),
-            LeakyReLU(),
-
-            Conv2D(filters=512, strides=(2, 2), kernel_size=(4, 4), padding='same', kernel_initializer='he_normal', use_bias=False),
             BatchNormalization(),
             LeakyReLU(),
 
@@ -153,6 +153,8 @@ class Network_Builder:
             #print("Current_epoch is {}".format(epoch))
             real_output_accuracy = None
             fake_output_accuracy = None
+            discriminator_losses = []
+            generator_losses = []
             for step, real_images_batch in enumerate(dataset):
                 # if step%50 == 0:
                 #     print("Current Step is: {}".format(step))
@@ -191,6 +193,7 @@ class Network_Builder:
                     pass
                 #Calculate the gradients between the loss and trainable weights of the discriminator
                 gradients = discriminator_tape.gradient(total_discriminator_loss, self.discriminator_model.trainable_variables)
+                discriminator_losses.append(tf.reduce_sum(total_discriminator_loss)/(batch_size*2))
                 #Apply those gradients to the trainable weights of the discriminator using the discriminator's optimizer
                 self.discriminator_optimizer.apply_gradients(zip(gradients, self.discriminator_model.trainable_variables))
                 with tf.GradientTape() as generator_tape:
@@ -208,13 +211,14 @@ class Network_Builder:
                     #generator_loss = tf.reduce_sum(generator_loss)/ (batch_size)
                     pass
                 #Calculate the gradients between the loss and trainable weights of the generator
-                gradients = generator_tape.gradient(generator_loss, self.generator_model.trainable_variables)
+                gradients = generator_tape.gradient(generator_loss, self.generator_model.trainable_variables) #Generator loss when tricking the discriminator
+                generator_losses.append(tf.reduce_sum(generator_loss)/batch_size)
                 #Apply those gradients to the trainable weights of the generator using the generator's optimizer
                 self.generator_optimizer.apply_gradients(zip(gradients, self.generator_model.trainable_variables))
             pass
             end_time = time.time()
-            print("Time for epoch {0} is {1:4f}s || Discriminator loss = {2} || Discriminator Fake Accuracy = {4} || Discriminator Real Accuracy = {5} || Generator loss = {3}".format(
-                epoch+1, (end_time-start_time), tf.reduce_sum(total_discriminator_loss), tf.reduce_sum(generator_loss), fake_output_accuracy, real_output_accuracy))
+            print("Time for epoch {0} is {1:4f}s || Discriminator loss = {2} || Generator image Accuracy = {4} || Real image Accuracy = {5} || Generator loss = {3}".format(
+                epoch+1, (end_time-start_time), tf.reduce_sum(discriminator_losses), tf.reduce_sum(generator_losses), fake_output_accuracy, real_output_accuracy))
             if (epoch+1) % 5 == 0:
                 self.save_the_model_checkpoint(epoch_number=epoch+1)
                 pass
