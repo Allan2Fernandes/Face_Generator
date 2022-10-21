@@ -4,10 +4,10 @@ import Network_Builder
 import Visualize_data
 
 # Set constants here
-BATCH_SIZE = 32
+BATCH_SIZE = 64
 image_size = (128, 128, 3)
 codings_size = 128
-EPOCHS = 20
+EPOCHS = 100
 
 # Folder location
 folder_path = "C:\\Users\\allan\\Downloads\\GANFacesDateset"

@@ -30,7 +30,7 @@ def build_label_dataset_v2(directory_path, target_size, batch_size):
         label_mode=None,
         class_names=None,
         color_mode='rgb',
-        batch_size=batch_size,
+        batch_size=None,
         image_size=target_dimension,
         shuffle=False,
         seed=None,
@@ -39,7 +39,7 @@ def build_label_dataset_v2(directory_path, target_size, batch_size):
         interpolation='bilinear',
         follow_links=False,
         crop_to_aspect_ratio=False)
-    dataset = dataset.map(map_dataset)
+    dataset = dataset.map(map_dataset).batch(batch_size = batch_size, drop_remainder = True).prefetch(buffer_size = 1)
     return dataset
 
 def map_dataset(datapoint):

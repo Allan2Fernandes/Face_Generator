@@ -150,12 +150,12 @@ class Network_Builder:
     def train_the_network(self, dataset, epochs, codings_size):
         for epoch in range(epochs):
             start_time = time.time()
-            print("Current_epoch is {}".format(epoch))
+            #print("Current_epoch is {}".format(epoch))
             real_output_accuracy = None
             fake_output_accuracy = None
             for step, real_images_batch in enumerate(dataset):
-                if step%50 == 0:
-                    print("Current Step is: {}".format(step))
+                # if step%50 == 0:
+                #     print("Current Step is: {}".format(step))
                 batch_size = real_images_batch.shape[0]
                 with tf.GradientTape() as discriminator_tape:
                     #Create noise
