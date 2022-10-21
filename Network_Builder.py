@@ -6,6 +6,7 @@ from keras.models import Sequential
 from keras import layers
 from keras.optimizers import RMSprop, Adam
 from keras.losses import BinaryCrossentropy
+from keras.metrics import BinaryAccuracy
 import time
 
 import Visualize_data
@@ -101,6 +102,11 @@ class Network_Builder:
             LeakyReLU(),
 
             Conv2D(filters=512, strides=(2, 2), kernel_size=(4, 4), padding='same', kernel_initializer='he_normal', use_bias=False),
+            BatchNormalization(),
+            LeakyReLU(),
+
+            Conv2D(filters=512, strides=(2, 2), kernel_size=(4, 4), padding='same', kernel_initializer='he_normal', use_bias=False),
+            BatchNormalization(),
             LeakyReLU(),
 
             Flatten(),
@@ -136,11 +142,17 @@ class Network_Builder:
         #self.GAN.summary()
         pass
 
+    def create_metrics(self):
+        self.discriminator_fake_metric = BinaryAccuracy()
+        self.discriminator_real_metric = BinaryAccuracy()
+
 
     def train_the_network(self, dataset, epochs, codings_size):
         for epoch in range(epochs):
             start_time = time.time()
             print("Current_epoch is {}".format(epoch))
+            real_output_accuracy = None
+            fake_output_accuracy = None
             for step, real_images_batch in enumerate(dataset):
                 if step%50 == 0:
                     print("Current Step is: {}".format(step))
@@ -152,11 +164,13 @@ class Network_Builder:
                     fake_images = self.generator_model(noise)
                     #Create fake output by passing fake images through the discriminator
                     fake_output = self.discriminator_model(fake_images)
+
                     #Create real output by passing the real images through discriminator
                     real_output = self.discriminator_model(real_images_batch)
                     #Calculate fake loss by using the loss function on the fake output and comparing it to 0s
                     fake_output_discriminator_labels = [0 for x in range(batch_size)]
                     fake_output_discriminator_labels = tf.reshape(fake_output_discriminator_labels, shape = (batch_size, 1))
+
                     fake_loss = self.loss_function(fake_output_discriminator_labels, fake_output)
                     #Calculate the real loss by using the loss function on the real output and comparing it to 1s
                     real_output_discriminator_labels = [1 for x in range(batch_size)]
@@ -164,6 +178,15 @@ class Network_Builder:
                     real_loss = self.loss_function(real_output_discriminator_labels, real_output)
                     #Add up the 2 losses to calculate total loss
                     total_discriminator_loss = tf.concat([fake_loss, real_loss], axis = 0)
+                    #Calculate the metrics for real and fake outputs of the discriminator
+                    self.discriminator_fake_metric.update_state(fake_output_discriminator_labels, fake_output)
+                    self.discriminator_real_metric.update_state(real_output_discriminator_labels, real_output)
+                    #Save the metrics
+                    fake_output_accuracy = self.discriminator_fake_metric.result()
+                    real_output_accuracy = self.discriminator_real_metric.result()
+                    #Reset the metrics
+                    self.discriminator_fake_metric.reset_state()
+                    self.discriminator_real_metric.reset_state()
                     #total_discriminator_loss = tf.reduce_sum(total_discriminator_loss)/ (batch_size*2) DO NOT REDUCE SUM. IT TAKES AN AVERAGE OF ALL THE REAL AND FAKE LOSSES
                     pass
                 #Calculate the gradients between the loss and trainable weights of the discriminator
@@ -190,7 +213,8 @@ class Network_Builder:
                 self.generator_optimizer.apply_gradients(zip(gradients, self.generator_model.trainable_variables))
             pass
             end_time = time.time()
-            print("Time for epoch {0} is {1:4f}s || Discriminator loss = {2} || Generator loss = {3}".format(epoch, (end_time-start_time), tf.reduce_sum(total_discriminator_loss), tf.reduce_sum(generator_loss)))
+            print("Time for epoch {0} is {1:4f}s || Discriminator loss = {2} || Discriminator Fake Accuracy = {4} || Discriminator Real Accuracy = {5} || Generator loss = {3}".format(
+                epoch+1, (end_time-start_time), tf.reduce_sum(total_discriminator_loss), tf.reduce_sum(generator_loss), fake_output_accuracy, real_output_accuracy))
             if (epoch+1) % 5 == 0:
                 self.save_the_model_checkpoint(epoch_number=epoch+1)
                 pass
@@ -204,7 +228,10 @@ class Network_Builder:
         pass
 
     def save_the_model_checkpoint(self, epoch_number):
-        self.generator_model.save("Saved_models/ModelEpoch {}".format(epoch_number))
+        #self.generator_model.save("Saved_models/ModelEpoch {}".format(epoch_number))
+
+        #Save the whole GAN
+        self.GAN.save("Saved_models/ModelEpoch{}".format(epoch_number))
         pass
 
 

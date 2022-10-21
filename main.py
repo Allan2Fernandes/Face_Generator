@@ -29,6 +29,7 @@ network_builder.build_discriminator()
 network_builder.build_GAN()
 network_builder.compile_models()
 network_builder.summarize_all_models()
+network_builder.create_metrics()
 
 network_builder.train_the_network(dataset=dataset, epochs=EPOCHS, codings_size=codings_size)
 
