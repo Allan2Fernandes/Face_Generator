@@ -7,7 +7,7 @@ import Visualize_data
 BATCH_SIZE = 64
 image_size = (128, 128, 3)
 codings_size = 128
-EPOCHS = 10
+EPOCHS = 100
 
 # Folder location
 folder_path = "C:\\Users\\allan\\Downloads\\GANFacesDateset"

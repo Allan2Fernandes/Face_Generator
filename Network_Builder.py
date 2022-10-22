@@ -24,7 +24,7 @@ class Network_Builder:
 
     def build_autoencoder_generator(self):
         kernel_size = 4
-        filters = 64
+        filters = 128
         output_channels = 3
 
 
@@ -43,7 +43,7 @@ class Network_Builder:
             LeakyReLU(),
 
             #Bottleneck layer
-            Conv2D(filters=filters*8, kernel_size=kernel_size, strides=2, padding='same', kernel_initializer='he_normal'),
+            Conv2D(filters=filters*8, kernel_size=kernel_size, strides=2, padding='same', kernel_initializer='he_normal', use_bias=False),
             BatchNormalization(),
             LeakyReLU(),
 
