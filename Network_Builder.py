@@ -85,14 +85,6 @@ class Network_Builder:
         self.discriminator_model = Sequential([
             Input(shape=self.discriminator_input_shape),
 
-            Conv2D(filters=64, strides=(2, 2), kernel_size=(4, 4), padding='same', kernel_initializer='he_normal', use_bias=False),
-            BatchNormalization(),
-            LeakyReLU(),
-
-            Conv2D(filters=64, strides=(2, 2), kernel_size=(4, 4), padding='same', kernel_initializer='he_normal', use_bias=False),
-            BatchNormalization(),
-            LeakyReLU(),
-
             Conv2D(filters=128, strides=(2, 2), kernel_size=(4, 4), padding='same', kernel_initializer='he_normal', use_bias=False),
             BatchNormalization(),
             LeakyReLU(),
@@ -106,6 +98,14 @@ class Network_Builder:
             LeakyReLU(),
 
             Conv2D(filters=256, strides=(2, 2), kernel_size=(4, 4), padding='same', kernel_initializer='he_normal', use_bias=False),
+            BatchNormalization(),
+            LeakyReLU(),
+
+            Conv2D(filters=512, strides=(2, 2), kernel_size=(4, 4), padding='same', kernel_initializer='he_normal', use_bias=False),
+            BatchNormalization(),
+            LeakyReLU(),
+
+            Conv2D(filters=512, strides=(2, 2), kernel_size=(4, 4), padding='same', kernel_initializer='he_normal', use_bias=False),
             BatchNormalization(),
             LeakyReLU(),
 
@@ -217,7 +217,7 @@ class Network_Builder:
                 self.generator_optimizer.apply_gradients(zip(gradients, self.generator_model.trainable_variables))
             pass
             end_time = time.time()
-            print("Time for epoch {0} is {1:4f}s || Discriminator loss = {2} || Generator image Accuracy = {4} || Real image Accuracy = {5} || Generator loss = {3}".format(
+            print("Time for epoch {0} is {1:4f}s || Discriminator loss (training discriminator) = {2} || Generator loss (tricking discriminator)= {3} || Generator image Accuracy (True negatives) = {4} || Real image Accuracy (True positives) = {5}".format(
                 epoch+1, (end_time-start_time), tf.reduce_sum(discriminator_losses), tf.reduce_sum(generator_losses), fake_output_accuracy, real_output_accuracy))
             if (epoch+1) % 5 == 0:
                 self.save_the_model_checkpoint(epoch_number=epoch+1)
